@@ -396,3 +396,22 @@ FodyWeavers.xsd
 
 # JetBrains Rider
 *.sln.iml
+
+# MacOS
+*.dSYM
+
+# exclude binary file
+Day*/Day*
+!Day*/Day*.*
+
+# Local History for Visual Studio Code
+.history/
+
+# Built Visual Studio Code Extensions
+*.vsix
+x64/*
+*/x64/*
+
+*.filters
+*.user
+
