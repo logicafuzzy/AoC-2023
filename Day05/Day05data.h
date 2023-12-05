@@ -3,49 +3,50 @@
 //#define TEST
 
 using namespace std;
-using cat_t = unsigned long long;
+using cat_t = uint64_t;
+using range_t = vector<cat_t>;
 
 #ifdef TEST
 
-	vector<cat_t> seeds{ 79,14,55,13 };
+	range_t seeds{ 79,14,55,13 };
 
-	vector<vector<cat_t>> seed_to_soil{
+	vector<range_t> seed_to_soil{
 	{50,98,2},
 	{52,50,48} };
 
-	vector<vector<cat_t>> soil_to_fertilizer{
+	vector<range_t> soil_to_fertilizer{
 	{0,15,37},
 	{37,52,2},
 	{39,0,15} };
 
-	vector<vector<cat_t>> fertilizer_to_water{
+	vector<range_t> fertilizer_to_water{
 	{49,53,8},
 	{0,11,42},
 	{42,0,7},
 	{57,7,4} };
 
-	vector<vector<cat_t>> water_to_light{
+	vector<range_t> water_to_light{
 	{88,18,7},
 	{18,25,70,} };
 
-	vector<vector<cat_t>> light_to_temperature{
+	vector<range_t> light_to_temperature{
 	{45,77,23},
 	{81,45,19},
 	{68,64,13} };
 
-	vector<vector<cat_t>> temperature_to_humidity{
+	vector<range_t> temperature_to_humidity{
 	{0,69,1	},
 	{1,0,69	} };
 
-	vector<vector<cat_t>> humidity_to_location{
+	vector<range_t> humidity_to_location{
 	{60,56,37},
 	{56,93,4} };
 
 #else
 
-	vector<cat_t> seeds{ 564468486,226119074,3264322485,135071952,3144185610,89794463,1560365167,555667043,2419038624,7808461,1264209624,9380035,105823719,425973940,4115473551,104486997,3784956593,300187503,975280918,257129208 };
+	range_t seeds{ 564468486,226119074,3264322485,135071952,3144185610,89794463,1560365167,555667043,2419038624,7808461,1264209624,9380035,105823719,425973940,4115473551,104486997,3784956593,300187503,975280918,257129208 };
 
-	vector<vector<cat_t>> seed_to_soil{
+	vector<range_t> seed_to_soil{
 	{1383244180,2567207479,366571891},
 	{3099137706,184794382,526583321},
 	{3625721027,2933779370,589006054},
@@ -59,7 +60,7 @@ using cat_t = unsigned long long;
 	{2578675023,3744452110,6454250},
 	{792246914,711377703,127176545} };
 
-	vector<vector<cat_t>> soil_to_fertilizer{
+	vector<range_t> soil_to_fertilizer{
 	{1263133301,1101112301,247905608},
 	{0,1881569198,406369887},
 	{3891730222,4233430396,61536900},
@@ -78,7 +79,7 @@ using cat_t = unsigned long long;
 	{651829505,2287939085,313800653},
 	{965630158,662720321,297503143} };
 
-	vector<vector<cat_t>> fertilizer_to_water{
+	vector<range_t> fertilizer_to_water{
 	{2026149150,1702247536,416569358},
 	{1701798124,875863088,283903191},
 	{4063252939,1683589413,18658123},
@@ -119,7 +120,7 @@ using cat_t = unsigned long long;
 	{1397421491,3076835700,19272745},
 	{3762516876,603242778,39733955}};
 
-	vector<vector<cat_t>> water_to_light{
+	vector<range_t> water_to_light{
 	{3045192883,3405560724,233949223},
 	{2014949572,1677426106,1239699},
 	{4293597773,2746321393,1369523},
@@ -162,7 +163,7 @@ using cat_t = unsigned long long;
 	{2683461350,2517751097,228570296},
 	{2678454881,3165606283,5006469} };
 
-	vector<vector<cat_t>> light_to_temperature{
+	vector<range_t> light_to_temperature{
 	{1030392082,1321188955,165336990},
 	{0,44804161,150706826},
 	{1568567634,1516401258,330930043},
@@ -196,7 +197,7 @@ using cat_t = unsigned long long;
 	{2098468643,2106038511,28329098},
 	{2643147805,3092552049,222622120} };
 
-	vector<vector<cat_t>> temperature_to_humidity{
+	vector<range_t> temperature_to_humidity{
 	{2682018628,3211857150,7482265},
 	{2267967594,974505223,103462688},
 	{3164705039,622508404,112412801},
@@ -240,7 +241,7 @@ using cat_t = unsigned long long;
 	{4187471637,4260816136,5458381},
 	{1827877752,3961271650,52517216} };
 
-	vector<vector<cat_t>> humidity_to_location{
+	vector<range_t> humidity_to_location{
 	{565280258,742633625,262999864},
 	{236814486,5872218,143216751},
 	{3086070204,1429025489,128855},
@@ -291,4 +292,4 @@ using cat_t = unsigned long long;
 
 #endif
 
-vector < vector < vector<cat_t> > > input_data{ seed_to_soil, soil_to_fertilizer, fertilizer_to_water, water_to_light, light_to_temperature, temperature_to_humidity, humidity_to_location };
+vector < vector < range_t > > input_data{ seed_to_soil, soil_to_fertilizer, fertilizer_to_water, water_to_light, light_to_temperature, temperature_to_humidity, humidity_to_location };
