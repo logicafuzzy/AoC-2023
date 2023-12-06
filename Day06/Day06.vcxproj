@@ -130,7 +130,7 @@
     <ClCompile Include="Day06.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <Text Include="Day06.txt" />
+    <Text Include="Day06.h" />
     <Text Include="Day06test.txt" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

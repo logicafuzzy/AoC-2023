@@ -1,28 +1,56 @@
 #include <iostream>
-
-#include <fstream>
 #include <string>
-#include <sstream>
+
+#include "Day06.h"
 
 using namespace std;
 
 int main() {
-	cout << " AoC 2023 Day03" << endl;
+	cout << " AoC 2023 Day06" << endl;
 
-	ifstream input("Day03.txt");
+	int64_t res = 1;
 
-	while (!input.eof()) {
-		string line;
-		getline(input, line);
-		std::stringstream sline(line);
+	for (int i = 0; i < t.size(); ++i) {
+		int tx1 = ceil((t[i] - sqrt(t[i] * t[i] - 4 * d[i])) / 2.0);		
 
-		int a, b, c, d, e;
-		sline >> a >> b >> c >> d >> e;
+		if (t[i] * tx1 - tx1 * tx1 == d[i])
+			++tx1;
 
-		cout << a << " " << b << " " << c << " " << d << " " << e << endl;
+
+		int tx2 = floor((t[i] + sqrt(t[i] * t[i] - 4 * d[i])) / 2.0);
+
+		if (t[i] * tx2 - tx2 * tx2 == d[i])
+			--tx2;
+
+		res *= tx2 - tx1 + 1;
+
+		printf("tx1 %d tx2 %d tx1 - tx2 + 1 = %d\n", tx1, tx2, tx2 - tx1 + 1);
+
+		printf("%d %d %f \n", t[i] * t[i], 4 * d[i], sqrt(t[i] * t[i] - 4 * d[i]));
 	}
 
-	input.close();
+	printf("res: %lld\n", res);
+
+	printf("Part2");
+
+	int64_t tx1 = ceil((t2 - sqrt(t2 * t2 - 4 * d2)) / 2.0);
+
+	if (t2 * tx1 - tx1 * tx1 == d2)
+		++tx1;
+
+
+	int64_t tx2 = floor((t2 + sqrt(t2 * t2 - 4 * d2)) / 2.0);
+
+	if (t2 * tx2 - tx2 * tx2 == d2)
+		--tx2;
+
+	res = tx2 - tx1 + 1;
+
+	printf("tx1 %lld tx2 %lld tx1 - tx2 + 1 = %lld\n", tx1, tx2, tx2 - tx1 + 1);
+
+	printf("%lld %lld %f \n", t2 * t2, 4 * d2, sqrt(t2 * t2 - 4 * d2));
+
+	printf("res: %lld\n", res);
 
 	return 0;
 }
