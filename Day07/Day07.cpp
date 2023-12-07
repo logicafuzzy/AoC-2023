@@ -108,7 +108,7 @@ int count_card(const hand_t& hand, enum cards card) {
 enum types get_highest_type(const hand_t& hand) {
 	int js = count_card(hand, cards::J);
 	
-	if (js == 0)
+	if (js == 0 || js == 5)
 		return get_type(hand);
 
 	enum types max_type = types::CARD;
