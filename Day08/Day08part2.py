@@ -48,18 +48,18 @@ def extended_gcd(a, b):
     return old_r, old_s, old_t
 
 
-#cycles = [21049, 14363, 15989, 16531, 19241, 19783]
-cycles = [21049, 267921900971]
-#steps = [28159343336, 28159322198, 28159331141, 28159335206, 28159338187, 28159339813]
-steps = [28159343336, 267921900971]
-offsets = []
+cycles = [21049, 14363, 15989, 16531, 19241, 19783]
+#cycles = [21049, 267921900971]
+steps = [28159343336, 28159322198, 28159331141, 28159335206, 28159338187, 28159339813]
+#steps = [28159343336, 267921900971]
+offsets = [12185, 0, 0, 0, 0, 0]
 
-for i in range(2):    
-    offsets.append(steps[i] % cycles[i])
+for i in range(len(cycles)):    
+    offsets[i] = steps[i] % cycles[i]
     print(f"cycles {cycles[i]} steps {steps[i]} offset {offsets[i]} ")
 
     
-for i in range(1,2):
+for i in range(1,len(cycles)):
     offset = offsets[i] - offsets[i-1]
     print(f"offset {offset}")
     if offset >= 0:
