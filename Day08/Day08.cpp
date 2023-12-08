@@ -10,8 +10,8 @@
 using namespace std;
 using map_t = unordered_map<string, pair<string, string>>;
 
-long distance(map_t& nodes, const vector<bool>& choices, const string& start, const string& end) {
-	long result = 0;
+uint64_t distance(map_t& nodes, const vector<bool>& choices, const string& start, const string& end) {
+	uint64_t result = 0;
 
 	string current = start;
 
@@ -22,8 +22,8 @@ long distance(map_t& nodes, const vector<bool>& choices, const string& start, co
 	return result;
 }
 
-pair<long, string> distance2(map_t& nodes, const vector<bool>& choices, const string& start, const char end, long cursor = 0) {
-	long result = cursor;
+pair<uint64_t, string> distance2(map_t& nodes, const vector<bool>& choices, const string& start, const char end, uint64_t cursor = 0) {
+	uint64_t result = cursor;
 
 	string current = start;
 
@@ -34,8 +34,8 @@ pair<long, string> distance2(map_t& nodes, const vector<bool>& choices, const st
 	return { result, current };
 }
 
-bool all_equal(const vector<long>& steps) {
-	for (long s : steps)
+bool all_equal(const vector<uint64_t>& steps) {
+	for (uint64_t s : steps)
 		if (s != steps[0])
 			return false;
 
@@ -43,8 +43,8 @@ bool all_equal(const vector<long>& steps) {
 }
 
 
-long get_min_index(const vector<long>& values) {
-	long min = values[0];
+uint64_t get_min_index(const vector<uint64_t>& values) {
+	uint64_t min = values[0];
 	int result = 0;
 
 	for (int i = 1; i < values.size(); ++i) {
@@ -57,8 +57,8 @@ long get_min_index(const vector<long>& values) {
 	return result;
 }
 
-void print(const vector<long>& values) {
-	for (long v : values)
+void print(const vector<uint64_t>& values) {
+	for (uint64_t v : values)
 		cout << " " << v << " ";
 	cout << endl;
 }
@@ -103,7 +103,7 @@ int main() {
 
 	//navigate graph
 
-	long step = 0;
+	uint64_t step = 0;
 
 	//step = distance(nodes, choices, start, end);
 
@@ -113,23 +113,37 @@ int main() {
 	printf("Part2: \n");
 
 	vector<string> currents = starts;
-	vector<long> steps(currents.size(), 0);
+	vector<uint64_t> steps(currents.size(), 0);
+	vector<bool> is_cycle(currents.size(), false);
+	vector<uint64_t> cycles(currents.size(), 0);
 
 	do {
 		int i = get_min_index(steps);
 		
-		long s = 0;
+		uint64_t s = 0;
 		bool store = false;
 
-		tie(steps[i], currents[i]) = distance2(nodes, choices, currents[i], end_char, steps[i]);
+		string current = currents[i];
 
+		if (is_cycle[i])
+		{
+			steps[i] += cycles[i];
+		}
+		else {
+			tie(s, currents[i]) = distance2(nodes, choices, currents[i], end_char, steps[i]);
+			if (current == currents[i]) {
+				is_cycle[i] = true;
+				cycles[i] = s - steps[i];
+			}
+			steps[i] = s;
+		}
 
 		if (i == 0)
 			print(steps);
 
 	} while (!all_equal(steps));
 
-	printf("Steps: %d", steps[0]);
+	printf("Steps: %ld", steps[0]);
 
 	return 0;
 }
