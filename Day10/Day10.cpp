@@ -173,7 +173,7 @@ void print(const simple_map_t& map) {
 int main() {
 	cout << " AoC 2023 Day10" << endl;
 
-	ifstream input("Day10test3.txt");
+	ifstream input("Day10.txt");
 
 	map_t map;
 
@@ -230,9 +230,11 @@ int main() {
 	simple_map_t simple_map = clean_map(map, path);
 
 	int count = 0;
-
+	
 	for (auto& row : simple_map) {
 		bool isOut = true;
+		bool isLine = false;
+
 		for (auto& c : row) {
 			if (c == '.') {
 				c = isOut ? 'O' : 'I';
@@ -240,7 +242,7 @@ int main() {
 					++count;
 			}
 			else {
-				if (c != '-')
+				if (c == '|' || c == '7' || c == 'F' /* || c == 'S'*/)
 					isOut = !isOut;
 			}
 		}
