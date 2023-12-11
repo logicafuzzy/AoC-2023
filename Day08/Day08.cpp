@@ -64,10 +64,10 @@ void print(const vector<uint64_t>& values) {
 }
 
 int main() {
-	cout << " AoC 2023 Day03" << endl;
+	cout << " AoC 2023 Day08" << endl;
 
 	const string start{ "AAA" };
-	const string end("ZZZ");
+	const string end{ "ZZZ" };
 	constexpr char end_char = 'Z';
 
 	vector<string> starts;
@@ -108,7 +108,7 @@ int main() {
 	//step = distance(nodes, choices, start, end);
 
 	printf("Part1: \n");
-	printf("Steps: %d \n", step);
+	printf("Steps: %lld \n", step);
 
 	printf("Part2: \n");
 
@@ -117,12 +117,11 @@ int main() {
 	vector<bool> is_cycle(currents.size(), false);
 	vector<uint64_t> cycles(currents.size(), 0);
 
+	uint64_t iterations = 0;
+
 	do {
 		int i = get_min_index(steps);
 		
-		uint64_t s = 0;
-		bool store = false;
-
 		string current = currents[i];
 
 		if (is_cycle[i])
@@ -130,6 +129,8 @@ int main() {
 			steps[i] += cycles[i];
 		}
 		else {
+			uint64_t s = 0;
+
 			tie(s, currents[i]) = distance2(nodes, choices, currents[i], end_char, steps[i]);
 			if (current == currents[i]) {
 				is_cycle[i] = true;
@@ -138,12 +139,12 @@ int main() {
 			steps[i] = s;
 		}
 
-		if (i == 0)
+		if ((iterations++) % 100000000 == 0)
 			print(steps);
 
 	} while (!all_equal(steps));
 
-	printf("Steps: %ld", steps[0]);
+	printf("Steps: %lld", steps[0]);
 
 	return 0;
 }
