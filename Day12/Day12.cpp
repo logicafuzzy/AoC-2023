@@ -5,12 +5,15 @@
 #include <sstream>
 #include <vector>
 #include <numeric>
+#include <algorithm>
+#include <execution>
 
 using namespace std;
 
 struct condition_t {
 	string record{};
 	vector<int> positions{};
+	int match{0};
 };
 
 condition_t get_condition(const string& line) {
@@ -64,7 +67,7 @@ vector<vector<int>> make_dots(const int positions, const int sum) {
 
 	int s = sum;
 	vector<int> res;
-	for (int i = pow(++s, positions), v, j; i--; v || (res.push_back(i), 0))
+	for (uint64_t i = pow(++s, positions), v, j; i--; v || (res.push_back(i), 0))
 		for (v = s - 1, j = i; j; j /= s)
 			v -= j % s; 
 
@@ -72,7 +75,7 @@ vector<vector<int>> make_dots(const int positions, const int sum) {
 	for (int elem : res) {
 		vector<int> combination;
 		bool discard = false;
-		for (int index = 0; index < positions; elem /= -~sum, ++index) {
+		for (uint64_t index = 0; index < positions; elem /= -~sum, ++index) {
 			int val = elem % -~sum;
 			// 0 only allowed at beginning or end
 			if (index == 0 || index > 0 && val > 0 || index == positions - 1)
@@ -118,7 +121,7 @@ int main() {
 
 	cout << " AoC 2023 Day12" << endl;
 
-	ifstream input("Day12.txt");
+	ifstream input("Day12test.txt");
 
 	vector<condition_t> conditions;
 
@@ -148,19 +151,30 @@ int main() {
 
 		for (const auto& condition : conditions) {
 			condition_t unfold;
-			unfold.record = string(condition.record, 5);
-			for (int i = 0; i < repeat; i++)
+			
+			for (int i = 0; i < repeat; i++) {
+				if (i > 0)
+					unfold.record += '?';
+
+				unfold.record += condition.record;
 				unfold.positions.insert(unfold.positions.begin(), condition.positions.begin(), condition.positions.end());
+			}
 			
 			unfolded.push_back(unfold);
 		}
 
-		for (const auto& condition : unfolded) {
-			sum += count_combinations(condition);
-			printf("%d of %d                 \r", ++index, unfolded.size());
-		}
+		atomic<int> progress = 0;
 
-		printf("Combinations: %d", sum);
+		for_each(execution::par_unseq, unfolded.begin(), unfolded.end(), [&unfolded = std::as_const(unfolded), &progress](auto& condition) {
+			int count = count_combinations(condition);
+			condition.match = count;
+			progress++;
+			printf("%d of %lld  count %d \n", progress.load(), unfolded.size(), count);
+			});
+
+		printf("Combinations: %d", accumulate(unfolded.begin(), unfolded.end(), 0, [](int sum, condition_t& condition) {
+			return sum + condition.match;
+			}));
 
 
 	}
