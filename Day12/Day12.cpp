@@ -10,7 +10,6 @@ using namespace std;
 
 struct condition_t {
 	string record{};
-	string arrangement{};
 	vector<int> positions{};
 };
 
@@ -33,7 +32,7 @@ condition_t get_condition(const string& line) {
 		//printf("\t Position: %d\n", positions.back());
 	}
 
-	return { record, arrangement, positions };
+	return { record, positions };
 }
 
 bool match(const string& record, const string& pattern) {
@@ -114,6 +113,9 @@ long count_combinations(const condition_t& condition) {
 }
 
 int main() {
+	constexpr bool isPart2 = true;
+	constexpr int repeat = 5;
+
 	cout << " AoC 2023 Day12" << endl;
 
 	ifstream input("Day12.txt");
@@ -131,11 +133,36 @@ int main() {
 
 	input.close();
 
-	for (auto& condition : conditions) {
-		sum += count_combinations(condition);
+	if (!isPart2) {
+		for (const auto& condition : conditions) {
+			sum += count_combinations(condition);
+		}
+
+		printf("Combinations: %d", sum);
 	}
+	else
+	{
+		//part2:
+		vector<condition_t> unfolded;
+		int index = 0;
 
-	printf("Combinations: %d", sum);
+		for (const auto& condition : conditions) {
+			condition_t unfold;
+			unfold.record = string(condition.record, 5);
+			for (int i = 0; i < repeat; i++)
+				unfold.positions.insert(unfold.positions.begin(), condition.positions.begin(), condition.positions.end());
+			
+			unfolded.push_back(unfold);
+		}
 
+		for (const auto& condition : unfolded) {
+			sum += count_combinations(condition);
+			printf("%d of %d                 \r", ++index, unfolded.size());
+		}
+
+		printf("Combinations: %d", sum);
+
+
+	}
 	return 0;
 }
