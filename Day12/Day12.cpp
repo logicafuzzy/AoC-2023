@@ -10,9 +10,11 @@
 
 using namespace std;
 
+using num_t = uint8_t;
+
 struct condition_t {
 	string record{};
-	vector<int> positions{};
+	vector<num_t> positions{};
 	int match{0};
 };
 
@@ -25,7 +27,7 @@ condition_t get_condition(const string& line) {
 
 	//printf("Record: %s Arrangement %s\n", record.c_str(), arrangement.c_str());
 
-	vector<int> positions;
+	vector<num_t> positions;
 
 	stringstream sarrangement(arrangement);
 	string position;
@@ -38,8 +40,8 @@ condition_t get_condition(const string& line) {
 	return { record, positions };
 }
 
-bool match(const string&& record, const string& pattern) {
-	if (record.size() != pattern.size())
+bool match(const string&& record, const string& pattern, bool allow_partial = false) {
+	if (!allow_partial && record.size() != pattern.size())
 		return false;
 
 	for (int i = 0; i < record.size(); ++i) {
@@ -50,30 +52,40 @@ bool match(const string&& record, const string& pattern) {
 	return true;
 }
 
-string make_record(const condition_t& condition, const vector<int>& dots) {
+string make_record(const condition_t& condition, const vector<num_t>& dots) {
 	stringstream sresult;
-	for (int i = 0; i < condition.positions.size(); i++) {
-		sresult << string(dots[i], '.') << string(condition.positions[i], '#');
+	if (dots.size() > condition.positions.size()) {
+		for (int i = 0; i < condition.positions.size(); i++) {
+			sresult << string(dots[i], '.') << string(condition.positions[i], '#');
+		}
+		sresult << string(dots.back(), '.');
 	}
-	sresult << string(dots.back(), '.');
+	else {
+		int size = min(condition.positions.size(), dots.size());
+
+		for (int i = 0; i < size; i++) {
+			sresult << string(dots[i], '.') << string(condition.positions[i], '#');
+		}
+	}
 
 	return sresult.str();
 }
 
-vector<vector<int>> make_dots(const int positions, const int sum) {
+// unused - works but very inefficient
+vector<vector<num_t>> make_dots(const int positions, const int sum) {
 	// inspired by: 
 	// https://codegolf.stackexchange.com/questions/220718/create-all-arrays-of-non-negative-integers-of-length-n-with-sum-of-parts-equal-t
 	// https://tio.run/##hVJdU8IwEHzvr7ip40wzTQC/XkiLP0QdpoQAqZB20mt1xPrTxSRFsDhoXi693b3sJhVlyZZC7HYXalMWBpOZwmpY4VzE8WA1CbIaC1hESiNoCq4g2Vp4PG6kwMIktjUxfFEYz1FpWbxEcYxUE9rQnCvGePP@HplBWVer6SwTz5EidESIkzQpsiuap4rnPB@mSBqW5pfIjcTaaDC8tb60WNdzmaiiQiOzzSRwB20ypSMSbAOw69QPoKxwqiGF7R2FWwo3Lf@DiI54TcFx7/ZM6w66RBYccVuS/dRBpd5kRIBDHCsCnQO3/B1Zdkd7UE@8B@E3hD3IWxJFjZAkEDp96Hbaf1Kv8o0OBzZ51OFR7Z/HTbW0RWRfCMkRPGSQa7mBsef9NNzPqefy1WftdtYCd7phyj6Q2qiue6r@FSDqxPfWaWhPDEPium7OpR3De@I2ODsm7IVsz1wW@28dprSBL/vfasSDdvcpFutsWe3Yyxc
 
 	int s = sum;
-	vector<int> res;
+	vector<num_t> res;
 	for (uint64_t i = pow(++s, positions), v, j; i--; v || (res.push_back(i), 0))
 		for (v = s - 1, j = i; j; j /= s)
 			v -= j % s; 
 
-	vector<vector<int>> combinations;
+	vector<vector<num_t>> combinations;
 	for (int elem : res) {
-		vector<int> combination;
+		vector<num_t> combination;
 		bool discard = false;
 		for (uint64_t index = 0; index < positions; elem /= -~sum, ++index) {
 			int val = elem % -~sum;
@@ -117,7 +129,8 @@ def partitions_nonnegative_fixed_length_ordered(n, r):
 		yield from partitions_prefixed(tuple(), int(n), int(r))
 */
 
-vector<vector<int>>& filter_partitions(vector<vector<int>>&& partitions) {
+// unused - only for testing
+vector<vector<num_t>>& filter_partitions(vector<vector<num_t>>&& partitions) {
 	//remove all combinations with zeroes inside
 	partitions.erase(remove_if(partitions.begin(), partitions.end(), [](auto& partition) {
 		for (int i = 1; i < partition.size() - 1; i++)
@@ -129,31 +142,40 @@ vector<vector<int>>& filter_partitions(vector<vector<int>>&& partitions) {
 	return partitions;
 }
 
-vector<vector<int>> partitions_prefixed(const vector<int>& partition, const int sum, const int positions) {
-	vector<vector<int>> result;
-	
+vector<vector<num_t>> partitions_prefixed(const vector<num_t>& partition, const int sum, const int positions, const condition_t& condition) {
 	if (positions == 1) {
-		vector<int> prefixed = partition;
+		vector<num_t> prefixed = partition;
 		prefixed.push_back(sum);
-		result = { prefixed };
-		return result;
+		if (match(make_record(condition, prefixed), condition.record))
+			return { prefixed };
+		else
+			return {};
 	}
 	
+	vector<vector<num_t>> result;
 	for (int i = 0; i < sum + 1; i++) {
 		//don't want zeroes inside
 		if (i == 0 && partition.size() != 0)
 			continue;
-		vector<int> prefixed = partition;
+		vector<num_t> prefixed = partition;
 		prefixed.push_back(i);
-		auto iteration = partitions_prefixed(prefixed, sum - i, positions - 1);
+
+		if (!match(make_record(condition, prefixed), condition.record, true))
+			continue;
+
+		auto iteration = partitions_prefixed(prefixed, sum - i, positions - 1, condition);
+		iteration.erase(remove_if(iteration.begin(), iteration.end(), [&condition](auto& prefix) {
+			return !match(make_record(condition, prefix), condition.record, true);
+			}), iteration.end());
+
 		result.insert(result.end(), iteration.begin(), iteration.end());
 	}
 	return result;
 }
 
-vector<vector<int>> make_partition(const int positions, const int sum) {
+vector<vector<num_t>> make_partition(const int positions, const int sum, const condition_t& condition) {
 	if (sum >= 0 and positions >= 1)
-		return partitions_prefixed({}, sum, positions);
+		return partitions_prefixed({}, sum, positions, condition);
 
 	return { {} };
 }
@@ -163,16 +185,18 @@ long count_combinations(const condition_t& condition) {
 	int N = condition.record.size();
 	int nDots = N - reduce(condition.positions.begin(), condition.positions.end());
 
-	vector<int> dots(condition.positions.size() + 1, 0);
+	vector<num_t> dots(condition.positions.size() + 1, 0);
 
-	vector<vector<int>> combinations = make_partition(condition.positions.size() + 1, nDots);
+	vector<vector<num_t>> combinations = make_partition(condition.positions.size() + 1, nDots, condition);
 
-	long count = 0;
+	return combinations.size();
 
-	for (auto& combination : combinations)
-		count += match(make_record(condition, combination), condition.record) ? 1 : 0;
+	//long count = 0;
 
-	return count;
+	//for (auto& combination : combinations)
+	//	count += match(make_record(condition, combination), condition.record) ? 1 : 0;
+
+	//return count;
 }
 
 int main() {
@@ -181,7 +205,7 @@ int main() {
 
 	cout << " AoC 2023 Day12" << endl;
 
-	ifstream input("Day12test.txt");
+	ifstream input("Day12.txt");
 
 	vector<condition_t> conditions;
 
