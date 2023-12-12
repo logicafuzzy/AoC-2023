@@ -38,7 +38,7 @@ condition_t get_condition(const string& line) {
 	return { record, positions };
 }
 
-bool match(const string& record, const string& pattern) {
+bool match(const string&& record, const string& pattern) {
 	if (record.size() != pattern.size())
 		return false;
 
@@ -93,24 +93,84 @@ vector<vector<int>> make_dots(const int positions, const int sum) {
 	return combinations;
 }
 
+/*
+* inspired from https://stackoverflow.com/a/56726334
+def partitions_nonnegative_fixed_length_ordered(n, r):
+	"""Generate the partitions of the nonnegative integer `n` as the
+	positions of `r` nonnegative integers, where the order of the integers
+	matters. The partitions are tuples and are generated in
+	lexicographic order. The number of partitions generated is
+	binomialcoefficient(n+r-1, r-1).
+
+	NOTE:   The empty generator is returned for n=r=0, though arguably
+			the generator yielding just the empty tuple would satisfy
+			the conditions.
+	"""
+	def partitions_prefixed(prefix, n, r):
+		if r == 1:
+			yield prefix + (n,)
+		else:
+			for i in range(n + 1):
+				yield from partitions_prefixed(prefix + (i,), n - i, r - 1)
+
+	if n >= 0 and r >= 1 and n == int(n) and r == int(r):
+		yield from partitions_prefixed(tuple(), int(n), int(r))
+*/
+
+vector<vector<int>>& filter_partitions(vector<vector<int>>&& partitions) {
+	//remove all combinations with zeroes inside
+	partitions.erase(remove_if(partitions.begin(), partitions.end(), [](auto& partition) {
+		for (int i = 1; i < partition.size() - 1; i++)
+			if (partition[i] == 0)
+				return true;
+		return false;
+		}), partitions.end());
+
+	return partitions;
+}
+
+vector<vector<int>> partitions_prefixed(const vector<int>& partition, const int sum, const int positions) {
+	vector<vector<int>> result;
+	
+	if (positions == 1) {
+		vector<int> prefixed = partition;
+		prefixed.push_back(sum);
+		result = { prefixed };
+		return result;
+	}
+	
+	for (int i = 0; i < sum + 1; i++) {
+		//don't want zeroes inside
+		if (i == 0 && partition.size() != 0)
+			continue;
+		vector<int> prefixed = partition;
+		prefixed.push_back(i);
+		auto iteration = partitions_prefixed(prefixed, sum - i, positions - 1);
+		result.insert(result.end(), iteration.begin(), iteration.end());
+	}
+	return result;
+}
+
+vector<vector<int>> make_partition(const int positions, const int sum) {
+	if (sum >= 0 and positions >= 1)
+		return partitions_prefixed({}, sum, positions);
+
+	return { {} };
+}
+
+
 long count_combinations(const condition_t& condition) {
 	int N = condition.record.size();
 	int nDots = N - reduce(condition.positions.begin(), condition.positions.end());
 
 	vector<int> dots(condition.positions.size() + 1, 0);
 
-	vector<vector<int>> combinations = make_dots(condition.positions.size() + 1, nDots);
+	vector<vector<int>> combinations = make_partition(condition.positions.size() + 1, nDots);
 
 	long count = 0;
 
-	for (auto& combination : combinations) {
-		const string record = make_record(condition, combination);
-		
-		bool isMatch = match(record, condition.record);
-		//printf("Record: %s \t match: %d\n", record.c_str(), isMatch);
-
-		count += isMatch ? 1 : 0;
-	}
+	for (auto& combination : combinations)
+		count += match(make_record(condition, combination), condition.record) ? 1 : 0;
 
 	return count;
 }
@@ -137,8 +197,11 @@ int main() {
 	input.close();
 
 	if (!isPart2) {
+
+		int index = 0;
 		for (const auto& condition : conditions) {
 			sum += count_combinations(condition);
+			printf("%d of %lld           \r", ++index, conditions.size());
 		}
 
 		printf("Combinations: %d", sum);
