@@ -18,6 +18,14 @@ struct condition_t {
 	int match{0};
 };
 
+ostream& operator<<(ostream& os, const vector<num_t>& vector)
+{
+	for (auto element : vector) {
+		os << (int)element << " ";
+	}
+	return os;
+}
+
 condition_t get_condition(const string& line) {
 	stringstream sline(line);
 
@@ -52,7 +60,6 @@ bool match(const string&& record, const string& pattern, bool allow_partial = fa
 	return true;
 }
 
-
 bool match_fast(const condition_t& condition, const vector<num_t> dots) {
 	int cursor = 0;
 	bool bdot = true;
@@ -65,10 +72,30 @@ bool match_fast(const condition_t& condition, const vector<num_t> dots) {
 	
 	int idot = 0; int ipos = 0;
 
-	while (cursor < record_size && dotindex < ndots && posindex < npos) {
+//#ifdef _DEBUG
+//	cout << "R: " << condition.record << endl;
+//	cout << "dots: " << dots << "pos: " << condition.positions << endl;
+//	cout << "M: ";
+//#endif
+
+	while (cursor < record_size && ((bdot && dotindex < ndots) || (!bdot && posindex < npos))) {
 		char record = condition.record[cursor];
-		if (record != '?' && ((bdot && record != '.') || (!bdot && record != '#')))
+
+		if (bdot && dots[dotindex] == 0) {
+			dotindex++;
+			bdot = false;
+		}
+
+//#ifdef _DEBUG
+//		cout << (bdot ? '.' : '#');
+//#endif
+		if (record != '?' && ((bdot && record != '.') || (!bdot && record != '#'))) {
+
+//#ifdef _DEBUG
+//			cout << " X" << endl << endl;
+//#endif
 			return false;
+		}
 
 		if (bdot && ++idot == dots[dotindex]) {
 				++dotindex;
@@ -83,6 +110,10 @@ bool match_fast(const condition_t& condition, const vector<num_t> dots) {
 
 		++cursor;
 	}
+
+#ifdef _DEBUG
+	cout << " V" << endl << endl;
+#endif
 
 	return true;
 }
@@ -229,12 +260,12 @@ long count_combinations(const condition_t& condition) {
 }
 
 int main() {
-	constexpr bool isPart2 = false;
+	constexpr bool isPart2 = true;
 	constexpr int repeat = 5;
 
 	cout << " AoC 2023 Day12" << endl;
 
-	ifstream input("Day12test.txt");
+	ifstream input("Day12.txt");
 
 	vector<condition_t> conditions;
 
