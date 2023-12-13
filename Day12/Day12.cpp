@@ -111,9 +111,9 @@ bool match_fast(const condition_t& condition, const vector<num_t> dots) {
 		++cursor;
 	}
 
-#ifdef _DEBUG
-	cout << " V" << endl << endl;
-#endif
+//#ifdef _DEBUG
+//	cout << " V" << endl << endl;
+//#endif
 
 	return true;
 }
