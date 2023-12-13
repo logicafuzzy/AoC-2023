@@ -18,6 +18,14 @@ struct condition_t {
 	int match{0};
 };
 
+ostream& operator<<(ostream& os, const vector<num_t>& vector)
+{
+	for (auto element : vector) {
+		os << (int)element << " ";
+	}
+	return os;
+}
+
 condition_t get_condition(const string& line) {
 	stringstream sline(line);
 
@@ -52,23 +60,28 @@ bool match(const string&& record, const string& pattern, bool allow_partial = fa
 	return true;
 }
 
-
 bool match_fast(const condition_t& condition, const vector<num_t> dots) {
+	const size_t record_size = condition.record.size();
+	const size_t ndots = dots.size();
+	const size_t npos = condition.positions.size();
+	
 	int cursor = 0;
-	bool bdot = true;
-	
-	int dotindex = 0, posindex = 0;
 
-	const int record_size = condition.record.size();
-	const int ndots = dots.size();
-	const int npos = condition.positions.size();
-	
 	int idot = 0; int ipos = 0;
+	int dotindex = (dots[0] == 0 ? 1 : 0), posindex = 0;
+	bool bdot = dots[0] != 0;
 
-	while (cursor < record_size && dotindex < ndots && posindex < npos) {
-		char record = condition.record[cursor];
-		if (record != '?' && ((bdot && record != '.') || (!bdot && record != '#')))
+	while (cursor < record_size && ((bdot && dotindex < ndots) || (!bdot && posindex < npos))) {
+		char record = condition.record[cursor++];
+
+		//if (bdot && dots[dotindex] == 0) {
+		//	dotindex++;
+		//	bdot = false;
+		//}
+
+		if (record != '?' && record != (bdot ? '.' : '#')) {
 			return false;
+		}
 
 		if (bdot && ++idot == dots[dotindex]) {
 				++dotindex;
@@ -81,8 +94,11 @@ bool match_fast(const condition_t& condition, const vector<num_t> dots) {
 			bdot = true;
 		}
 
-		++cursor;
 	}
+
+//#ifdef _DEBUG
+//	cout << " V" << endl << endl;
+//#endif
 
 	return true;
 }
@@ -96,7 +112,7 @@ string make_record(const condition_t& condition, const vector<num_t>& dots) {
 		sresult << string(dots.back(), '.');
 	}
 	else {
-		int size = min(condition.positions.size(), dots.size());
+		size_t size = min(condition.positions.size(), dots.size());
 
 		for (int i = 0; i < size; i++) {
 			sresult << string(dots[i], '.') << string(condition.positions[i], '#');
@@ -114,7 +130,7 @@ vector<vector<num_t>> make_dots(const int positions, const int sum) {
 
 	int s = sum;
 	vector<num_t> res;
-	for (uint64_t i = pow(++s, positions), v, j; i--; v || (res.push_back(i), 0))
+	for (uint64_t i = (uint64_t)pow(++s, positions), v, j; i--; v || (res.push_back(i), 0))
 		for (v = s - 1, j = i; j; j /= s)
 			v -= j % s; 
 
@@ -188,12 +204,12 @@ vector<vector<num_t>> partitions_prefixed(const vector<num_t>& partition, const 
 	}
 	
 	vector<vector<num_t>> result;
-	for (int i = 0; i < sum + 1; i++) {
-		//don't want zeroes inside
-		if (i == 0 && partition.size() != 0)
-			continue;
-		vector<num_t> prefixed = partition;
-		prefixed.push_back(i);
+	vector<num_t> prefixed = partition;
+	prefixed.push_back(0);
+	//zeroes can be only at the beginning
+	for (int i = (partition.size() == 0 ? 0 : 1); i <= sum; i++) {
+
+		prefixed.back() = i;
 
 		if (!match_fast(condition, prefixed))
 			continue;
@@ -217,7 +233,7 @@ vector<vector<num_t>> make_partition(const int positions, const int sum, const c
 
 
 long count_combinations(const condition_t& condition) {
-	int N = condition.record.size();
+	size_t N = condition.record.size();
 	int nDots = N - reduce(condition.positions.begin(), condition.positions.end());
 
 	vector<num_t> dots(condition.positions.size() + 1, 0);
@@ -229,12 +245,12 @@ long count_combinations(const condition_t& condition) {
 }
 
 int main() {
-	constexpr bool isPart2 = false;
+	constexpr bool isPart2 = true;
 	constexpr int repeat = 5;
 
 	cout << " AoC 2023 Day12" << endl;
 
-	ifstream input("Day12test.txt");
+	ifstream input("Day12.txt");
 
 	vector<condition_t> conditions;
 
@@ -281,12 +297,17 @@ int main() {
 
 		atomic<int> progress = 0;
 
-		for_each(execution::par_unseq, unfolded.begin(), unfolded.end(), [&unfolded = std::as_const(unfolded), &progress](auto& condition) {
+		ofstream output("output.txt");
+
+		for_each(execution::par_unseq, unfolded.begin() + progress, unfolded.end(), [&unfolded = std::as_const(unfolded), &progress, &output](auto& condition) {
 			int count = count_combinations(condition);
 			condition.match = count;
 			progress++;
 			printf("%d of %lld  count %d \n", progress.load(), unfolded.size(), count);
+			output << progress.load() << ", " << count << endl;
 			});
+
+		output.close();
 
 		printf("Combinations: %d", accumulate(unfolded.begin(), unfolded.end(), 0, [](int sum, condition_t& condition) {
 			return sum + condition.match;
