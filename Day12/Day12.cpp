@@ -52,6 +52,41 @@ bool match(const string&& record, const string& pattern, bool allow_partial = fa
 	return true;
 }
 
+
+bool match_fast(const condition_t& condition, const vector<num_t> dots) {
+	int cursor = 0;
+	bool bdot = true;
+	
+	int dotindex = 0, posindex = 0;
+
+	const int record_size = condition.record.size();
+	const int ndots = dots.size();
+	const int npos = condition.positions.size();
+	
+	int idot = 0; int ipos = 0;
+
+	while (cursor < record_size && dotindex < ndots && posindex < npos) {
+		char record = condition.record[cursor];
+		if (record != '?' && ((bdot && record != '.') || (!bdot && record != '#')))
+			return false;
+
+		if (bdot && ++idot == dots[dotindex]) {
+				++dotindex;
+				idot = 0;
+				bdot = false;
+		}
+		else if (!bdot && ++ipos == condition.positions[posindex]) {
+			++posindex;
+			ipos = 0;
+			bdot = true;
+		}
+
+		++cursor;
+	}
+
+	return true;
+}
+
 string make_record(const condition_t& condition, const vector<num_t>& dots) {
 	stringstream sresult;
 	if (dots.size() > condition.positions.size()) {
@@ -146,7 +181,7 @@ vector<vector<num_t>> partitions_prefixed(const vector<num_t>& partition, const 
 	if (positions == 1) {
 		vector<num_t> prefixed = partition;
 		prefixed.push_back(sum);
-		if (match(make_record(condition, prefixed), condition.record))
+		if (match_fast(condition, prefixed))
 			return { prefixed };
 		else
 			return {};
@@ -160,12 +195,12 @@ vector<vector<num_t>> partitions_prefixed(const vector<num_t>& partition, const 
 		vector<num_t> prefixed = partition;
 		prefixed.push_back(i);
 
-		if (!match(make_record(condition, prefixed), condition.record, true))
+		if (!match_fast(condition, prefixed))
 			continue;
 
 		auto iteration = partitions_prefixed(prefixed, sum - i, positions - 1, condition);
 		iteration.erase(remove_if(iteration.begin(), iteration.end(), [&condition](auto& prefix) {
-			return !match(make_record(condition, prefix), condition.record, true);
+			return !match_fast(condition, prefix);
 			}), iteration.end());
 
 		result.insert(result.end(), iteration.begin(), iteration.end());
@@ -191,21 +226,15 @@ long count_combinations(const condition_t& condition) {
 
 	return combinations.size();
 
-	//long count = 0;
-
-	//for (auto& combination : combinations)
-	//	count += match(make_record(condition, combination), condition.record) ? 1 : 0;
-
-	//return count;
 }
 
 int main() {
-	constexpr bool isPart2 = true;
+	constexpr bool isPart2 = false;
 	constexpr int repeat = 5;
 
 	cout << " AoC 2023 Day12" << endl;
 
-	ifstream input("Day12.txt");
+	ifstream input("Day12test.txt");
 
 	vector<condition_t> conditions;
 
