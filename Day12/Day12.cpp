@@ -61,39 +61,25 @@ bool match(const string&& record, const string& pattern, bool allow_partial = fa
 }
 
 bool match_fast(const condition_t& condition, const vector<num_t> dots) {
-	int cursor = 0;
-	bool bdot = true;
-	
-	int dotindex = 0, posindex = 0;
-
 	const int record_size = condition.record.size();
 	const int ndots = dots.size();
 	const int npos = condition.positions.size();
 	
-	int idot = 0; int ipos = 0;
+	int cursor = 0;
 
-//#ifdef _DEBUG
-//	cout << "R: " << condition.record << endl;
-//	cout << "dots: " << dots << "pos: " << condition.positions << endl;
-//	cout << "M: ";
-//#endif
+	int idot = 0; int ipos = 0;
+	int dotindex = (dots[0] == 0 ? 1 : 0), posindex = 0;
+	bool bdot = dots[0] != 0;
 
 	while (cursor < record_size && ((bdot && dotindex < ndots) || (!bdot && posindex < npos))) {
-		char record = condition.record[cursor];
+		char record = condition.record[cursor++];
 
-		if (bdot && dots[dotindex] == 0) {
-			dotindex++;
-			bdot = false;
-		}
+		//if (bdot && dots[dotindex] == 0) {
+		//	dotindex++;
+		//	bdot = false;
+		//}
 
-//#ifdef _DEBUG
-//		cout << (bdot ? '.' : '#');
-//#endif
-		if (record != '?' && ((bdot && record != '.') || (!bdot && record != '#'))) {
-
-//#ifdef _DEBUG
-//			cout << " X" << endl << endl;
-//#endif
+		if (record != '?' && record != (bdot ? '.' : '#')) {
 			return false;
 		}
 
@@ -108,12 +94,7 @@ bool match_fast(const condition_t& condition, const vector<num_t> dots) {
 			bdot = true;
 		}
 
-		++cursor;
 	}
-
-#ifdef _DEBUG
-	cout << " V" << endl << endl;
-#endif
 
 	return true;
 }
@@ -219,12 +200,12 @@ vector<vector<num_t>> partitions_prefixed(const vector<num_t>& partition, const 
 	}
 	
 	vector<vector<num_t>> result;
-	for (int i = 0; i < sum + 1; i++) {
-		//don't want zeroes inside
-		if (i == 0 && partition.size() != 0)
-			continue;
-		vector<num_t> prefixed = partition;
-		prefixed.push_back(i);
+	vector<num_t> prefixed = partition;
+	prefixed.push_back(0);
+	//zeroes can be only at the beginning
+	for (int i = (partition.size() == 0 ? 0 : 1); i <= sum; i++) {
+
+		prefixed.back() = i;
 
 		if (!match_fast(condition, prefixed))
 			continue;
@@ -312,7 +293,7 @@ int main() {
 
 		atomic<int> progress = 0;
 
-		for_each(execution::par_unseq, unfolded.begin(), unfolded.end(), [&unfolded = std::as_const(unfolded), &progress](auto& condition) {
+		for_each(execution::seq, unfolded.begin() + progress, unfolded.end(), [&unfolded = std::as_const(unfolded), &progress](auto& condition) {
 			int count = count_combinations(condition);
 			condition.match = count;
 			progress++;
