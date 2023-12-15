@@ -36,7 +36,7 @@ condition_t get_condition(const string& line, uint16_t id) {
 
 	//printf("Record: %s Arrangement %s\n", record.c_str(), arrangement.c_str());
 
-	vector<int> positions;
+	vector<num_t> positions;
 
 	stringstream sarrangement(arrangement);
 	string position;
@@ -46,7 +46,7 @@ condition_t get_condition(const string& line, uint16_t id) {
 		//printf("\t Position: %d\n", positions.back());
 	}
 
-	return { record, positions };
+	return { record, positions, id };
 }
 
 bool match(const string&& record, const string& pattern) {
@@ -190,14 +190,15 @@ vector<vector<num_t>>& filter_partitions(vector<vector<num_t>>&& partitions) {
 	return partitions;
 }
 
-vector<vector<num_t>> partitions_prefixed(const vector<num_t>& partition, const int sum, const int positions, const condition_t& condition) {
+vector<vector<num_t>> partitions_prefixed(const vector<num_t>& partition, const int sum, const int positions, const condition_t& condition, uint64_t& accumulator ) {
 	if (positions == 1) {
 		vector<num_t> prefixed = partition;
 		prefixed.push_back(sum);
+		
 		if (match_fast(condition, prefixed))
-			return { prefixed };
-		else
-			return {};
+			++accumulator;
+
+		return {};
 	}
 	
 	vector<vector<num_t>> result;
@@ -211,7 +212,7 @@ vector<vector<num_t>> partitions_prefixed(const vector<num_t>& partition, const 
 		if (!match_fast(condition, prefixed))
 			continue;
 
-		auto iteration = partitions_prefixed(prefixed, sum - i, positions - 1, condition);
+		auto iteration = partitions_prefixed(prefixed, sum - i, positions - 1, condition, accumulator);
 		iteration.erase(remove_if(iteration.begin(), iteration.end(), [&condition](auto& prefix) {
 			return !match_fast(condition, prefix);
 			}), iteration.end());
@@ -221,13 +222,14 @@ vector<vector<num_t>> partitions_prefixed(const vector<num_t>& partition, const 
 	return result;
 }
 
-vector<vector<num_t>> make_partition(const int positions, const int sum, const condition_t& condition) {
+uint64_t make_partition(const int positions, const int sum, const condition_t& condition) {
+	uint64_t accumulator = 0;
+
 	if (sum >= 0 and positions >= 1)
-		return partitions_prefixed({}, sum, positions, condition);
+		partitions_prefixed({}, sum, positions, condition, accumulator);
 
-	return { {} };
+	return accumulator;
 }
-
 
 long count_combinations(const condition_t& condition) {
 	size_t N = condition.record.size();
@@ -235,9 +237,7 @@ long count_combinations(const condition_t& condition) {
 
 	vector<num_t> dots(condition.positions.size() + 1, 0);
 
-	vector<vector<num_t>> combinations = make_partition(condition.positions.size() + 1, nDots, condition);
-
-	return combinations.size();
+	return make_partition(condition.positions.size() + 1, nDots, condition);
 
 }
 
@@ -280,7 +280,12 @@ int main() {
 
 		while (!saved.eof()) {
 			string line;
+			
 			getline(saved, line);
+
+			if (line == "")
+				break;
+
 			stringstream sline(line);
 			int id;
 			long result;
