@@ -6,23 +6,37 @@
 
 using namespace std;
 
-int main() {
-	cout << " AoC 2023 Day00" << endl;
+uint8_t compute_hash(string s) {
+	int val = 0;
+	for (char c : s)
+		val = ((val + c) * 17) % 256;
+	
+	return val;
+}
 
-	ifstream input("Day00.txt");
+int main() {
+	cout << " AoC 2023 Day15" << endl;
+
+	int sum = 0;
+
+	ifstream input("Day15.txt");
 
 	while (!input.eof()) {
 		string line;
 		getline(input, line);
 		std::stringstream sline(line);
 
-		int a, b, c, d, e;
-		sline >> a >> b >> c >> d >> e;
-
-		cout << a << " " << b << " " << c << " " << d << " " << e << endl;
+		string val;
+		
+		while (!sline.eof()) {
+			sline >> val;
+			sum += compute_hash(val);
+		}
 	}
 
 	input.close();
+
+	printf("Total sum: %d", sum);
 
 	return 0;
 }
