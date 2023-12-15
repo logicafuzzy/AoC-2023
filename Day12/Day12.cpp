@@ -15,7 +15,8 @@ using num_t = uint8_t;
 struct condition_t {
 	string record{};
 	vector<num_t> positions{};
-	int match{0};
+	uint16_t id{};
+	int32_t match{-1};
 };
 
 ostream& operator<<(ostream& os, const vector<num_t>& vector)
@@ -26,7 +27,7 @@ ostream& operator<<(ostream& os, const vector<num_t>& vector)
 	return os;
 }
 
-condition_t get_condition(const string& line) {
+condition_t get_condition(const string& line, uint16_t id) {
 	stringstream sline(line);
 
 	string record, arrangement;
@@ -35,7 +36,7 @@ condition_t get_condition(const string& line) {
 
 	//printf("Record: %s Arrangement %s\n", record.c_str(), arrangement.c_str());
 
-	vector<num_t> positions;
+	vector<int> positions;
 
 	stringstream sarrangement(arrangement);
 	string position;
@@ -48,8 +49,8 @@ condition_t get_condition(const string& line) {
 	return { record, positions };
 }
 
-bool match(const string&& record, const string& pattern, bool allow_partial = false) {
-	if (!allow_partial && record.size() != pattern.size())
+bool match(const string&& record, const string& pattern) {
+	if (record.size() != pattern.size())
 		return false;
 
 	for (int i = 0; i < record.size(); ++i) {
@@ -252,11 +253,12 @@ int main() {
 
 	long sum = 0;
 
+	uint16_t id = 0;
 	while (!input.eof()) {
 		string line;
 		getline(input, line);
 
-		conditions.push_back(get_condition(line));
+		conditions.push_back(get_condition(line, id++));
 	}
 
 	input.close();
@@ -273,11 +275,38 @@ int main() {
 	}
 	else
 	{
+
+		ifstream saved("output.txt");
+
+		while (!saved.eof()) {
+			string line;
+			getline(saved, line);
+			stringstream sline(line);
+			int id;
+			long result;
+			sline >> id >> result;
+
+			conditions[id].match = result;
+		}
+
+		saved.close();
+
 		//part2:
 		vector<condition_t> unfolded;
 		int index = 0;
 
+		ofstream output("output.txt");
+
+		int loaded = 0;
+
 		for (const auto& condition : conditions) {
+
+			if (condition.match != -1) {
+				loaded++;
+				output << condition.id << " " << condition.match << endl;
+				continue;
+			}
+
 			condition_t unfold;
 			
 			for (int i = 0; i < repeat; i++) {
@@ -286,21 +315,20 @@ int main() {
 
 				unfold.record += condition.record;
 				unfold.positions.insert(unfold.positions.begin(), condition.positions.begin(), condition.positions.end());
+				unfold.id = condition.id;
 			}
 			
 			unfolded.push_back(unfold);
 		}
-
+		
 		atomic<int> progress = 0;
 
-		ofstream output("output.txt");
-
-		for_each(execution::par_unseq, unfolded.begin() + progress, unfolded.end(), [&unfolded = std::as_const(unfolded), &progress, &output](auto& condition) {
-			int count = count_combinations(condition);
-			condition.match = count;
-			progress++;
-			printf("%d of %lld  count %d \n", progress.load(), unfolded.size(), count);
-			output << progress.load() << ", " << count << endl;
+		for_each(execution::par_unseq, unfolded.begin(), unfolded.end(), [&unfolded = std::as_const(unfolded), &progress, &output](auto& condition) {
+				int count = count_combinations(condition);
+				condition.match = count;
+				progress++;
+				printf("%d of %lld  id: %d count %d \n", progress.load(), unfolded.size(), condition.id, count);
+				output << condition.id << " " << count << endl;
 			});
 
 		output.close();
