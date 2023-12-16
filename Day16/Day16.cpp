@@ -172,55 +172,12 @@ bool evolve_beam(map_t& map, beam_t& beam, vector<beam_t>& new_beams) {
 
 }
 
-int main() {
-	cout << " AoC 2023 Day16" << endl;
-
-	map_t map;
-
-	ifstream input("Day16.txt");
-
-	int row_id = 0;
-
-	while (!input.eof()) {
-		string line;
-		getline(input, line);
-
-		row_id++;
-		int col_id = 0;
-		row_t row;
-
-		for (char c : line) {
-			switch (c) {
-			case '.':
-				row.push_back({ cell_type_t::EMPTY});
-				break;
-			case '/':
-				row.push_back({ cell_type_t::MIRROR_U });
-				break;
-			case '\\':
-				row.push_back({ cell_type_t::MIRROR_D });
-				break;
-			case '-':
-				row.push_back({ cell_type_t::SPLIT_H });
-				break;
-			case '|':
-				row.push_back({ cell_type_t::SPLIT_V });
-				break;
-			}
-			col_id++;
-		}
-
-		map.push_back(row);
-
-	}
-
-	input.close();
-
-	vector<beam_t> beams{ {0, 0, direction_t::RIGHT} };
+ int count_energized(map_t& map, beam_t initial) {
+	vector<beam_t> beams{ initial };
 	vector<beam_t> outside{};
 	vector<beam_t> loops{};
 
-	map[0][0].energy++;
+	map[initial.row][initial.col].energy++;
 
 	while (beams.size() > 0) {
 		vector<beam_t> new_beams;
@@ -233,7 +190,7 @@ int main() {
 			}
 
 		//remove beams fallen outside
-		for (auto& el:to_remove)
+		for (auto& el : to_remove)
 			beams.erase(std::remove(beams.begin(), beams.end(), el), beams.end());
 
 		//remove beams that are part of a loop (same position and direction as history
@@ -282,12 +239,85 @@ int main() {
 	for (auto& row : map) {
 		for (auto& cell : row) {
 			count += cell.energy > 0 ? 1 : 0;
-			cout << cell.energy;
+			//cout << cell.energy;
 		}
-		cout << endl;
+		//cout << endl;
 	}
 
-	cout << "Energized: " << count;
+	return count;
+}
+
+int main() {
+	cout << " AoC 2023 Day16" << endl;
+
+	map_t map;
+
+	ifstream input("Day16.txt");
+
+	int row_id = 0;
+
+	while (!input.eof()) {
+		string line;
+		getline(input, line);
+
+		row_id++;
+		int col_id = 0;
+		row_t row;
+
+		for (char c : line) {
+			switch (c) {
+			case '.':
+				row.push_back({ cell_type_t::EMPTY});
+				break;
+			case '/':
+				row.push_back({ cell_type_t::MIRROR_U });
+				break;
+			case '\\':
+				row.push_back({ cell_type_t::MIRROR_D });
+				break;
+			case '-':
+				row.push_back({ cell_type_t::SPLIT_H });
+				break;
+			case '|':
+				row.push_back({ cell_type_t::SPLIT_V });
+				break;
+			}
+			col_id++;
+		}
+
+		map.push_back(row);
+
+	}
+
+	input.close();
+
+	int max_count = 0;
+
+	for (int row = 0; row < map.size(); row++) {
+		map_t new_map = map;
+		int count = count_energized(new_map, { row, 0, direction_t::RIGHT });
+		cout << "row " << row << " ->: " << count << endl;
+		max_count = max(max_count, count);
+
+		new_map = map;
+		count = count_energized(new_map, { row, (int)new_map[row].size() - 1, direction_t::LEFT});
+		cout << "row " << row << " <-: " << count << endl;
+		max_count = max(max_count, count);
+	}
+
+	for (int col = 0; col < map[0].size(); col++) {
+		map_t new_map = map;
+		int count = count_energized(new_map, { 0, col, direction_t::DOWN });
+		cout << "col " << col << " v: " << count << endl;
+		max_count = max(max_count, count);
+
+		new_map = map;
+		count = count_energized(new_map, { (int)new_map.size() - 1, col, direction_t::UP});
+		cout << "col " << col << " ^: " << count << endl;
+		max_count = max(max_count, count);
+	}
+
+	cout << "Energized: " << max_count << endl;
 
 	return 0;
 }
