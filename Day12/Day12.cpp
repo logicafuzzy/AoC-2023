@@ -8,6 +8,8 @@
 #include <algorithm>
 #include <execution>
 
+#include <cmath>
+
 using namespace std;
 
 using num_t = uint8_t;
@@ -16,7 +18,7 @@ struct condition_t {
 	string record{};
 	vector<num_t> positions{};
 	uint16_t id{};
-	int32_t match{-1};
+	int64_t match{-1};
 };
 
 ostream& operator<<(ostream& os, const vector<num_t>& vector)
@@ -231,7 +233,7 @@ uint64_t make_partition(const int positions, const int sum, const condition_t& c
 	return accumulator;
 }
 
-long count_combinations(const condition_t& condition) {
+uint64_t count_combinations(const condition_t& condition) {
 	size_t N = condition.record.size();
 	int nDots = N - reduce(condition.positions.begin(), condition.positions.end());
 
@@ -251,7 +253,7 @@ int main() {
 
 	vector<condition_t> conditions;
 
-	long sum = 0;
+	uint64_t sum = 0;
 
 	uint16_t id = 0;
 	while (!input.eof()) {
@@ -268,7 +270,7 @@ int main() {
 		int index = 0;
 		for (const auto& condition : conditions) {
 			sum += count_combinations(condition);
-			printf("%d of %lld           \r", ++index, conditions.size());
+			printf("%d of %llu           \r", ++index, conditions.size());
 		}
 
 		printf("Combinations: %d", sum);
@@ -329,16 +331,16 @@ int main() {
 		atomic<int> progress = 0;
 
 		for_each(execution::par_unseq, unfolded.begin(), unfolded.end(), [&unfolded = std::as_const(unfolded), &progress, &output](auto& condition) {
-				int count = count_combinations(condition);
+				uint64_t count = count_combinations(condition);
 				condition.match = count;
 				progress++;
-				printf("%d of %lld  id: %d count %d \n", progress.load(), unfolded.size(), condition.id, count);
+				printf("%d of %llu  id: %d count %llu \n", progress.load(), unfolded.size(), condition.id, count);
 				output << condition.id << " " << count << endl;
 			});
 
 		output.close();
 
-		printf("Combinations: %d", accumulate(unfolded.begin(), unfolded.end(), 0, [](int sum, condition_t& condition) {
+		printf("Combinations: %llu", accumulate(unfolded.begin(), unfolded.end(), 0, [](uint64_t sum, condition_t& condition) {
 			return sum + condition.match;
 			}));
 
