@@ -10,11 +10,11 @@
 
 using namespace std;
 
-using row_t = map<int,char>;
-using map_t = map<int,row_t>;
-using coords_t = pair<int, int>;
+using row_t = map<int64_t,char>;
+using map_t = map<int64_t,row_t>;
+using coords_t = pair<int64_t, int64_t>;
 
-void dig(map_t& map, coords_t& cursor, char dir, int length, coords_t& min_coords, coords_t& max_coords) {
+void dig(map_t& map, coords_t& cursor, char dir, int64_t length, coords_t& min_coords, coords_t& max_coords) {
 
 	for (int i = 0; i < length; i++) {
 		char& prev = map[cursor.first][cursor.second];
@@ -50,9 +50,9 @@ void dig(map_t& map, coords_t& cursor, char dir, int length, coords_t& min_coord
 }
 
 void print_map(map_t& map, const coords_t& min_coords, const coords_t& max_coords) {
-	for (int row = min_coords.first; row <= max_coords.first; row++) {
+	for (int64_t row = min_coords.first; row <= max_coords.first; row++) {
 		cout << " ";
-		for (int col = min_coords.second; col <= max_coords.second; col++) {
+		for (int64_t col = min_coords.second; col <= max_coords.second; col++) {
 			if (map.find(row) != map.end() && map[row].find(col) != map[row].end())
 				cout << map[row][col];
 			else
@@ -62,8 +62,8 @@ void print_map(map_t& map, const coords_t& min_coords, const coords_t& max_coord
 	}
 }
 
-long fill_map(map_t& map, const coords_t& min_coords, const coords_t& max_coords) {
-	long count = 0; // count #
+uint64_t fill_map(map_t& map, const coords_t& min_coords, const coords_t& max_coords) {
+	uint64_t count = 0; // count #
 
 	/* from part 10
 			if (c == '.') {
@@ -77,10 +77,10 @@ long fill_map(map_t& map, const coords_t& min_coords, const coords_t& max_coords
 			}
 	*/
 
-	for (int row = min_coords.first; row <= max_coords.first; row++) {
+	for (int64_t row = min_coords.first; row <= max_coords.first; row++) {
 		bool inside = false;
 		char prev = '.';
-		for (int col = min_coords.second; col <= max_coords.second; col++) {
+		for (int64_t col = min_coords.second; col <= max_coords.second; col++) {
 			if (map.find(row) != map.end() && map[row].find(col) != map[row].end()) {
 				count++;
 				//flip only on Up or Down, or 7 / F type corner -> UR, 
@@ -126,7 +126,7 @@ int main() {
 		std::stringstream sline(line);
 
 		char dir;
-		int length;
+		int64_t length;
 		string color;
 
 		sline >> dir >> length >> color;
@@ -140,7 +140,7 @@ int main() {
 
 	print_map(map, min_coords, max_coords);
 
-	long count = fill_map(map, min_coords, max_coords);
+	uint64_t count = fill_map(map, min_coords, max_coords);
 
 	cout << endl;
 	print_map(map, min_coords, max_coords);
