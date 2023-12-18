@@ -7,6 +7,9 @@
 #include <array>
 #include <map>
 #include <tuple>
+#include <numeric>
+#include <algorithm>
+#include <execution>
 
 using namespace std;
 
@@ -77,33 +80,56 @@ uint64_t fill_map(map_t& map, const coords_t& min_coords, const coords_t& max_co
 			}
 	*/
 
-	for (int64_t row = min_coords.first; row <= max_coords.first; row++) {
+	vector<int64_t> rows(max_coords.first - min_coords.first + 1, 0);
+	std::iota(rows.begin(), rows.end(), min_coords.first);
+
+	for_each(execution::par_unseq, rows.begin(), rows.end(), [&map, &min_coords, &max_coords](int64_t& initial_row) {
 		bool inside = false;
 		char prev = '.';
+		uint64_t row = initial_row;
+		initial_row = 0; // will accumulate result
+		row_t& map_row = map[row];
 		for (int64_t col = min_coords.second; col <= max_coords.second; col++) {
-			if (map.find(row) != map.end() && map[row].find(col) != map[row].end()) {
-				count++;
+			if (map.find(row) != map.end() && map_row.find(col) != map_row.end()) {
+				initial_row++;
 				//flip only on Up or Down, or 7 / F type corner -> UR, 
-				char v = map[row][col];
+				char v = map_row[col];
 				if (((v == 'U' || v == 'D') && prev == '.') || v == '7' || v == 'F')
 					inside = !inside;
 				prev = v;
 			}
 			else {
 				if (inside) {
-					map[row][col] = '#';
-					count++;
+					map_row[col] = '#';
+					initial_row++;
 				}
-				else 
-					map[row][col] = '.';
+				else
+					map_row[col] = '.';
 
 
 				prev = '.';
 			}
 
 		}
-	}
-	return count;
+		});
+
+	return std::accumulate(rows.begin(), rows.end(), (uint64_t)0, plus<int64_t>());
+}
+
+pair<char, long> color_to_dir_length(string color) {
+	std::array<char, 4> id_to_dir{ 'R', 'D', 'L', 'U' };
+
+	const int size = color.size();
+	char dir = id_to_dir[color[size - 2] - '0'];
+
+	color = string(color.substr(2, size - 4));
+
+	stringstream scolor(color);
+	long value;
+
+	scolor >> std::hex >> value;
+
+	return { dir, value };
 }
 
 int main() {
@@ -120,6 +146,8 @@ int main() {
 
 	coords_t cursor{ 0, 0 };
 
+	constexpr bool isPart1 = true;
+
 	while (!input.eof()) {
 		string line;
 		getline(input, line);
@@ -130,20 +158,28 @@ int main() {
 		string color;
 
 		sline >> dir >> length >> color;
-		
-		dig(map, cursor, dir, length, min_coords, max_coords);
+
+		if (isPart1)
+			dig(map, cursor, dir, length, min_coords, max_coords);
+		else {
+			auto dir_length = color_to_dir_length(color);
+			dig(map, cursor, dir_length.first, dir_length.second, min_coords, max_coords);
+		}
 	}
 
 	dig(map, cursor, 'L', 1, min_coords, max_coords);
 
 	input.close();
 
-	print_map(map, min_coords, max_coords);
+	if (isPart1)
+		print_map(map, min_coords, max_coords);
 
 	uint64_t count = fill_map(map, min_coords, max_coords);
 
 	cout << endl;
-	print_map(map, min_coords, max_coords);
+
+	if (isPart1)
+		print_map(map, min_coords, max_coords);
 
 	cout << "Count: " << count << endl;
 
