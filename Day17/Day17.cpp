@@ -123,6 +123,7 @@ public:
 		: _n(N) 
 		, dist(_n, numeric_limits<int>::max())
 		, prev(_n, -1)
+		, visited(_n, false)
 	{};
 
 	void add(int from, int to, int weight) {
@@ -133,25 +134,14 @@ public:
 	// adaptation of dijstra algorithm
 	vector<int> path(int src)
 	{
-		// smallest on top because of greater<> compare function
-		priority_queue<link_t, vector<link_t>, greater<link_t>>
-			pq;
-
-		// distance from self = 0
-		pq.push({ 0, src });
 		dist[src] = 0;
+
+		int current = src;
 
 		/* Looping till priority queue becomes empty (or all
 		distances are not finalized) */
-		while (!pq.empty()) {
-			// The first vertex in pair is the minimum distance
-			// vertex, extract it from priority queue.
-			// vertex label is stored in second of pair (it
-			// has to be done this way to keep the vertices
-			// sorted distance (distance must be first item
-			// in pair)
-			int u = pq.top().second;
-			pq.pop();
+		while (true) {
+			
 
 			// 'i' is used to get all adjacent vertices of a
 			// vertex
@@ -180,6 +170,7 @@ public:
 
 	vector<int> dist;
 	vector<int> prev;
+	vector<bool> visited;
 
 	map_t map;
 };
