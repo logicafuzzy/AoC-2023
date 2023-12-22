@@ -13,6 +13,8 @@
 using namespace std;
 
 using num_t = uint8_t;
+constexpr inline auto execution_strategy = std::execution::par_unseq;
+
 
 struct condition_t {
 	string record{};
@@ -140,7 +142,7 @@ vector<vector<num_t>> make_dots(const int positions, const int sum) {
 		for (uint64_t index = 0; index < positions; elem /= -~sum, ++index) {
 			int val = elem % -~sum;
 			// 0 only allowed at beginning or end
-			if (index == 0 || index > 0 && val > 0 || index == positions - 1)
+			if (index == 0 || (index > 0 && val > 0) || index == positions - 1)
 				combination.push_back(val);
 			else {
 				discard = true;
@@ -203,25 +205,48 @@ vector<vector<num_t>> partitions_prefixed(const vector<num_t>& partition, const 
 		return {};
 	}
 	
-	vector<vector<num_t>> result;
 	vector<num_t> prefixed = partition;
 	prefixed.push_back(0);
+
+	const uint64_t start = partition.size() == 0 ? 0 : 1;
+	const int p_size = sum - start + 1;
+	vector<uint64_t> ids(p_size); // if partition.size() == 0 -> [0, sum] (size sum + 1), else [1,sum] (size = sum)
+	std::iota(ids.begin(), ids.end(), start);
+	
+	vector<vector<vector<num_t>>> results(p_size);
+	vector<uint64_t> accumulators(p_size, 0);
+	vector<vector<num_t>> prefixeds(p_size, prefixed);
+
 	//zeroes can be only at the beginning
-	for (int i = (partition.size() == 0 ? 0 : 1); i <= sum; i++) {
+	std::for_each(execution_strategy, ids.begin(), ids.end(), [&](uint64_t id) {
+		const uint64_t i = id - start;
 
-		prefixed.back() = i;
+		prefixeds[i].back() = id;
 
-		if (!match_fast(condition, prefixed))
-			continue;
+		if (!match_fast(condition, prefixeds[i]))
+			return;
 
-		auto iteration = partitions_prefixed(prefixed, sum - i, positions - 1, condition, accumulator);
+		auto iteration = partitions_prefixed(prefixeds[i], sum - id, positions - 1, condition, accumulators[i]);
 		iteration.erase(remove_if(iteration.begin(), iteration.end(), [&condition](auto& prefix) {
 			return !match_fast(condition, prefix);
 			}), iteration.end());
 
-		result.insert(result.end(), iteration.begin(), iteration.end());
+		results[i].insert(results[i].end(), iteration.begin(), iteration.end());
+	});
+
+	if (results.size() > 0) {
+		
+		for (uint64_t i = 1; i < results.size(); i++) {
+			results[0].insert(results[0].end(), results[i].begin(), results[i].end());
+			results[i].clear();
+		}
+		accumulator = std::accumulate(accumulators.begin(), accumulators.end(), accumulator);
+
+		return results[0];
 	}
-	return result;
+	else {
+		return {};
+	}
 }
 
 uint64_t make_partition(const int positions, const int sum, const condition_t& condition) {
@@ -270,10 +295,10 @@ int main() {
 		int index = 0;
 		for (const auto& condition : conditions) {
 			sum += count_combinations(condition);
-			printf("%d of %llu           \r", ++index, conditions.size());
+			printf("%d of %zu           \r", ++index, conditions.size());
 		}
 
-		printf("Combinations: %d", sum);
+		printf("Combinations: %lu", sum);
 	}
 	else
 	{
@@ -300,7 +325,6 @@ int main() {
 
 		//part2:
 		vector<condition_t> unfolded;
-		int index = 0;
 
 		ofstream output("output.txt");
 
@@ -330,17 +354,17 @@ int main() {
 		
 		atomic<int> progress = 0;
 
-		for_each(execution::par_unseq, unfolded.begin(), unfolded.end(), [&unfolded = std::as_const(unfolded), &progress, &output](auto& condition) {
+		for_each(execution_strategy, unfolded.begin(), unfolded.end(), [&unfolded = std::as_const(unfolded), &progress, &output](auto& condition) {
 				uint64_t count = count_combinations(condition);
 				condition.match = count;
+				printf("%d of %zu  id: %d count %lu \n", progress.load(), unfolded.size(), condition.id, count);
 				progress++;
-				printf("%d of %llu  id: %d count %llu \n", progress.load(), unfolded.size(), condition.id, count);
 				output << condition.id << " " << count << endl;
 			});
 
 		output.close();
 
-		printf("Combinations: %llu", accumulate(unfolded.begin(), unfolded.end(), 0, [](uint64_t sum, condition_t& condition) {
+		printf("Combinations: %lu", accumulate(unfolded.begin(), unfolded.end(), (uint64_t)0, [](uint64_t sum, condition_t& condition) {
 			return sum + condition.match;
 			}));
 
