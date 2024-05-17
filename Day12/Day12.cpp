@@ -65,7 +65,7 @@ bool match(const string&& record, const string& pattern) {
 	return true;
 }
 
-bool match_fast(const condition_t& condition, const vector<num_t> dots) {
+bool match_fast(const condition_t& condition, const vector<num_t>& dots) {
 	const size_t record_size = condition.record.size();
 	const size_t ndots = dots.size();
 	const size_t npos = condition.positions.size();
@@ -124,38 +124,38 @@ string make_record(const condition_t& condition, const vector<num_t>& dots) {
 }
 
 // unused - works but very inefficient
-vector<vector<num_t>> make_dots(const int positions, const int sum) {
-	// inspired by: 
-	// https://codegolf.stackexchange.com/questions/220718/create-all-arrays-of-non-negative-integers-of-length-n-with-sum-of-parts-equal-t
-	// https://tio.run/##hVJdU8IwEHzvr7ip40wzTQC/XkiLP0QdpoQAqZB20mt1xPrTxSRFsDhoXi693b3sJhVlyZZC7HYXalMWBpOZwmpY4VzE8WA1CbIaC1hESiNoCq4g2Vp4PG6kwMIktjUxfFEYz1FpWbxEcYxUE9rQnCvGePP@HplBWVer6SwTz5EidESIkzQpsiuap4rnPB@mSBqW5pfIjcTaaDC8tb60WNdzmaiiQiOzzSRwB20ypSMSbAOw69QPoKxwqiGF7R2FWwo3Lf@DiI54TcFx7/ZM6w66RBYccVuS/dRBpd5kRIBDHCsCnQO3/B1Zdkd7UE@8B@E3hD3IWxJFjZAkEDp96Hbaf1Kv8o0OBzZ51OFR7Z/HTbW0RWRfCMkRPGSQa7mBsef9NNzPqefy1WftdtYCd7phyj6Q2qiue6r@FSDqxPfWaWhPDEPium7OpR3De@I2ODsm7IVsz1wW@28dprSBL/vfasSDdvcpFutsWe3Yyxc
-
-	int s = sum;
-	vector<num_t> res;
-	for (uint64_t i = (uint64_t)pow(++s, positions), v, j; i--; v || (res.push_back(i), 0))
-		for (v = s - 1, j = i; j; j /= s)
-			v -= j % s; 
-
-	vector<vector<num_t>> combinations;
-	for (int elem : res) {
-		vector<num_t> combination;
-		bool discard = false;
-		for (uint64_t index = 0; index < positions; elem /= -~sum, ++index) {
-			int val = elem % -~sum;
-			// 0 only allowed at beginning or end
-			if (index == 0 || (index > 0 && val > 0) || index == positions - 1)
-				combination.push_back(val);
-			else {
-				discard = true;
-				break;
-			}
-		}
-
-		if (!discard)
-			combinations.push_back(combination);
-	}
-
-	return combinations;
-}
+//vector<vector<num_t>> make_dots(const int positions, const int sum) {
+//	// inspired by: 
+//	// https://codegolf.stackexchange.com/questions/220718/create-all-arrays-of-non-negative-integers-of-length-n-with-sum-of-parts-equal-t
+//	// https://tio.run/##hVJdU8IwEHzvr7ip40wzTQC/XkiLP0QdpoQAqZB20mt1xPrTxSRFsDhoXi693b3sJhVlyZZC7HYXalMWBpOZwmpY4VzE8WA1CbIaC1hESiNoCq4g2Vp4PG6kwMIktjUxfFEYz1FpWbxEcYxUE9rQnCvGePP@HplBWVer6SwTz5EidESIkzQpsiuap4rnPB@mSBqW5pfIjcTaaDC8tb60WNdzmaiiQiOzzSRwB20ypSMSbAOw69QPoKxwqiGF7R2FWwo3Lf@DiI54TcFx7/ZM6w66RBYccVuS/dRBpd5kRIBDHCsCnQO3/B1Zdkd7UE@8B@E3hD3IWxJFjZAkEDp96Hbaf1Kv8o0OBzZ51OFR7Z/HTbW0RWRfCMkRPGSQa7mBsef9NNzPqefy1WftdtYCd7phyj6Q2qiue6r@FSDqxPfWaWhPDEPium7OpR3De@I2ODsm7IVsz1wW@28dprSBL/vfasSDdvcpFutsWe3Yyxc
+//
+//	int s = sum;
+//	vector<num_t> res;
+//	for (uint64_t i = (uint64_t)pow(++s, positions), v, j; i--; v || (res.push_back(i), 0))
+//		for (v = s - 1, j = i; j; j /= s)
+//			v -= j % s; 
+//
+//	vector<vector<num_t>> combinations;
+//	for (int elem : res) {
+//		vector<num_t> combination;
+//		bool discard = false;
+//		for (uint64_t index = 0; index < positions; elem /= -~sum, ++index) {
+//			int val = elem % -~sum;
+//			// 0 only allowed at beginning or end
+//			if (index == 0 || index > 0 && val > 0 || index == positions - 1)
+//				combination.push_back(val);
+//			else {
+//				discard = true;
+//				break;
+//			}
+//		}
+//
+//		if (!discard)
+//			combinations.push_back(combination);
+//	}
+//
+//	return combinations;
+//}
 
 /*
 * inspired from https://stackoverflow.com/a/56726334
@@ -194,7 +194,7 @@ vector<vector<num_t>>& filter_partitions(vector<vector<num_t>>&& partitions) {
 	return partitions;
 }
 
-vector<vector<num_t>> partitions_prefixed(const vector<num_t>& partition, const int sum, const int positions, const condition_t& condition, uint64_t& accumulator ) {
+vector<vector<num_t>> partitions_prefixed(const vector<num_t>& partition, const size_t sum, const size_t positions, const condition_t& condition, uint64_t& accumulator ) {
 	if (positions == 1) {
 		vector<num_t> prefixed = partition;
 		prefixed.push_back(sum);
@@ -249,7 +249,7 @@ vector<vector<num_t>> partitions_prefixed(const vector<num_t>& partition, const 
 	}
 }
 
-uint64_t make_partition(const int positions, const int sum, const condition_t& condition) {
+uint64_t make_partition(const size_t positions, const size_t sum, const condition_t& condition) {
 	uint64_t accumulator = 0;
 
 	if (sum >= 0 and positions >= 1)
@@ -260,7 +260,7 @@ uint64_t make_partition(const int positions, const int sum, const condition_t& c
 
 uint64_t count_combinations(const condition_t& condition) {
 	size_t N = condition.record.size();
-	int nDots = N - reduce(condition.positions.begin(), condition.positions.end());
+	size_t nDots = N - reduce(condition.positions.begin(), condition.positions.end());
 
 	vector<num_t> dots(condition.positions.size() + 1, 0);
 
@@ -298,7 +298,7 @@ int main() {
 			printf("%d of %zu           \r", ++index, conditions.size());
 		}
 
-		printf("Combinations: %lu", sum);
+		printf("Combinations: %llu", sum);
 	}
 	else
 	{
