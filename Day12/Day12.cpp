@@ -234,19 +234,17 @@ vector<vector<num_t>> partitions_prefixed(const vector<num_t>& partition, const 
 		results[i].insert(results[i].end(), iteration.begin(), iteration.end());
 	});
 
-	if (results.size() > 0) {
-		
-		for (uint64_t i = 1; i < results.size(); i++) {
-			results[0].insert(results[0].end(), results[i].begin(), results[i].end());
-			results[i].clear();
-		}
-		accumulator = std::accumulate(accumulators.begin(), accumulators.end(), accumulator);
+	vector<vector<num_t>> retval = {};
+	size_t retval_size = std::accumulate(results.begin(), results.end(), 0, [](const size_t& acc, const vector<vector<num_t>>& value) {return acc + value.size(); });
+	retval.reserve(retval_size);
 
-		return results[0];
+	for (const auto& result : results) {
+		retval.insert(retval.end(), result.begin(), result.end());
 	}
-	else {
-		return {};
-	}
+
+	accumulator = std::accumulate(accumulators.begin(), accumulators.end(), accumulator);
+
+	return retval;
 }
 
 uint64_t make_partition(const size_t positions, const size_t sum, const condition_t& condition) {
@@ -354,7 +352,7 @@ int main() {
 		
 		atomic<int> progress = 0;
 
-		for_each(execution_strategy, unfolded.begin(), unfolded.end(), [&unfolded = std::as_const(unfolded), &progress, &output](auto& condition) {
+		for_each(std::execution::seq, unfolded.begin(), unfolded.end(), [&unfolded = std::as_const(unfolded), &progress, &output](auto& condition) {
 				uint64_t count = count_combinations(condition);
 				condition.match = count;
 				printf("%d of %zu  id: %d count %lu \n", progress.load(), unfolded.size(), condition.id, count);
