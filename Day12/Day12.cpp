@@ -15,6 +15,8 @@ using namespace std;
 using num_t = uint8_t;
 constexpr inline auto execution_strategy = std::execution::par_unseq;
 
+constexpr bool isPart2 = true;
+constexpr int repeat = 5;
 
 struct condition_t {
 	string record{};
@@ -266,11 +268,108 @@ uint64_t count_combinations(const condition_t& condition) {
 
 }
 
+condition_t repeat_condition(const condition_t& condition, int reps) {
+	
+	condition_t result;
+	
+	for (int i = 0; i < reps; i++) {
+		if (i > 0)
+			result.record += '?';
+
+		result.record += condition.record;
+		result.positions.insert(result.positions.begin(), condition.positions.begin(), condition.positions.end());
+		result.id = condition.id;
+	}
+
+	return result;
+}
+
+bool test_arrangements(const vector<condition_t>& conditions, const vector<uint64_t>& results, const vector<string>& arrangements) {
+	int id = 0;
+	bool result = false;
+	bool passed = true;
+	uint64_t count;
+
+	for (const auto& condition : conditions) {
+
+		count = count_combinations(condition);
+		result = count == results[id];
+		passed &= result;
+
+		if (result)
+			cout << " [ OK ] ";			
+		else
+			cout << "[ ERROR ] ";
+
+		cout << "test " << id << " [" << arrangements[id] << "]: count " << count << " expected " << results[id] << endl;
+
+		id++;
+	}
+
+	return passed;
+}
+
+vector<condition_t> get_conditions(const vector<string>& arrangements) {
+	vector<condition_t> conditions;
+
+	int id = 0;
+	for (auto& arrangement : arrangements)
+		conditions.push_back(get_condition(arrangement, id++));
+
+	return conditions;
+}
+
+vector<condition_t> get_conditions(const vector<string>& arrangements, int reps) {
+	vector<condition_t> conditions;
+
+	int id = 0;
+	for (auto& arrangement : arrangements)
+		conditions.push_back(repeat_condition(get_condition(arrangement, id++), reps));
+
+	return conditions;
+}
+
+bool test() {
+	//part 1
+	vector<uint64_t> results{ 1,4,1,1,4,10 };
+	vector<uint64_t> results_part2{ 1, 16384, 1, 16, 2500, 506250};
+
+
+	vector<string> arrangements{
+		"???.### 1,1,3",
+		".??..??...?##. 1,1,3",
+		"?#?#?#?#?#?#?#? 1,3,1,6",
+		"????.#...#... 4,1,1",
+		"????.######..#####. 1,6,5",
+		"?###???????? 3,2,1"
+	};
+
+	cout << "Testing part1..." << endl;
+
+	if (!test_arrangements(get_conditions(arrangements), results, arrangements)) {
+		cout << "test part1 failed" << endl;
+		return false;
+	}
+
+	cout << "Testing part2..." << endl;
+
+	if (!test_arrangements(get_conditions(arrangements, repeat), results_part2, arrangements)) {
+		cout << "test part2 failed" << endl;
+		return false;
+	}
+
+	cout << "passed" << endl;
+	return true;
+}
+
 int main() {
-	constexpr bool isPart2 = true;
-	constexpr int repeat = 5;
 
 	cout << " AoC 2023 Day12" << endl;
+	
+	if (!test()) {
+		cout << "failed" << endl;
+		exit(1);
+	}
 
 	ifstream input("Day12.txt");
 
@@ -335,19 +434,8 @@ int main() {
 				output << condition.id << " " << condition.match << endl;
 				continue;
 			}
-
-			condition_t unfold;
 			
-			for (int i = 0; i < repeat; i++) {
-				if (i > 0)
-					unfold.record += '?';
-
-				unfold.record += condition.record;
-				unfold.positions.insert(unfold.positions.begin(), condition.positions.begin(), condition.positions.end());
-				unfold.id = condition.id;
-			}
-			
-			unfolded.push_back(unfold);
+			unfolded.push_back(repeat_condition(condition, repeat));
 		}
 		
 		atomic<int> progress = 0;
